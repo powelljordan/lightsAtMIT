@@ -1,0 +1,79 @@
+body {
+/*   properties to create background image, from http://stradegyadvertising.com/css-create-fullscreen-background-image/ */
+/* dimming the background from http://stackoverflow.com/questions/23208200/how-to-darken-a-background-using-css */
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('http://2.bp.blogspot.com/-PpMv3cDFUdY/Vd3mM43xtbI/AAAAAAAAAQ8/4tX8tSPu61U/s1600/focus%2Bsmall%2Bled%2Blight.jpg') no-repeat 50% 50% fixed;
+    background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    -webkit-background-size: cover;
+}
+
+#sign-in-paragraph, #register-paragraph {
+    text-align: center;
+    font-size: 20px;
+}
+
+.user.icon, .lock.icon {
+    color: darkblue;
+}
+
+
+#login-register-segment, #outer-segment{
+    /*    properties to position in center of the page, from https://css-tricks.com/centering-css-complete-guide/*/
+    /*width: 350px;
+    height: 220px;
+    position: absolute;
+    top: 50%;
+    left: 50%;*/
+    /*transform: translate(-50%, -50%);*/
+
+    width: 20%;
+    height: 25%;
+    position: absolute;
+    top: 37.5%;
+    left: 40%;
+    opacity: 0.95;
+}
+
+#sign-in-button, #register-link-button, #register-button{
+    display: block;
+    margin: 0 auto;
+}
+
+.register {
+  text-align: center;
+  /*font-weight: bold;*/
+  color: black;
+}
+
+.link {
+  text-decoration: underline;
+}
+#register-success-message {
+  background-color: white;
+  opacity: 0.95;
+}
+
+.green {
+  background-color: green;
+}
+
+#lights-title {
+    color: gold;
+    font-family: cabin-sketch, sans-serif;
+}
+
+#lights-at-MIT-title {
+    text-align: center;
+}
+
+#at-mit-title {
+  font-family: aclonica, sans-serif;
+  font-weight: bold;
+}
+
+#at-mit-title, #lights-title {
+  display: inline;
+  text-align: center;
+  font-size: 160px;
+}

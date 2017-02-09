@@ -1,0 +1,179 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+body.pushable {
+    background: rgba(0,0,0,0) !important;
+    margin-top:3.65%;
+    width:93%;
+    height:90%;
+    margin-left: 3.7%;
+}
+
+a {
+  color: #00B7FF;
+  /*font-size: 3em;*/
+}
+
+#fixed-side-menu{
+    z-index: 10;
+}
+
+#content-sidebar{
+    z-index:3;
+    width: 50% !important;
+}
+
+#chat-container{
+    margin-top:0px;
+    height:98%;
+}
+
+#chat-box{
+    width:100%;
+    height:10%;
+}
+
+#send-button{
+    margin-right: 0px;
+}
+
+#whiteboard-container{
+    height:600px;
+    margin-left: 90px;
+    position:relative;
+
+}
+
+#whiteboard{
+    cursor:crosshair;
+    width:100%;
+    height:100%;
+    background-color:#faebd7;
+}
+
+#viewport{
+    height:100%;
+    width:100%;
+}
+
+#whiteboard-buttons{
+    cursor: pointer;
+    position:absolute;
+    top:2%;
+    right:2%;
+}
+
+#download{
+    width:50px !important;
+    height:50px !important;
+    display:inline-block;
+}
+
+#workspace-title{
+    color:white;
+}
+
+.eraser{
+    height:50px;
+    width:50px;
+    border:2px solid black;
+}
+
+.circle-base{
+    border-radius:50%;
+    height:50px;
+    width:50px;
+}
+
+.ui.visible.left.sidebar~.pusher {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+
+}
+
+#add-user-image {
+    margin: 0 auto;
+}
+
+.add-user-content {
+    text-align: center;
+}
+
+.add.user.icon {
+    color: green;
+}
+
+.alarm.icon {
+    color: goldenrod;
+}
+
+#knock-header {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#requesting-username-label {
+    background-color: white;
+}
+
+.message.username {
+    font-weight: bold;
+}
+
+.message.content, .message.username {
+    color: black;
+}
+
+#current-user-message {
+/*    from: http://stackoverflow.com/questions/12242472/css-may-i-right-align-an-element-by-margin-0-0-0-auto */
+    margin-left: auto;
+    text-align: right;
+}
+
+#other-user-message {
+    margin-right: auto;
+    width: inherit;
+}
+
+#input-message-box {
+    width: 85%;
+    position: absolute;
+    bottom: 0px;
+    margin-left: 13%;
+}
+
+#input-message {
+    width: 100%;
+}
+
+#sent-chat-messages {
+    margin-left: 120px;
+    margin-top: 40px;
+    height: 90%;
+    overflow-y: auto;
+}
+
+.message.content {
+    word-wrap: break-word;
+}
+
+#send-button {
+/*    from http://www.experts-exchange.com/Programming/Languages/.NET/ASP.NET/Q_24129690.html */
+    display: block;
+    float: right;
+}
+
+.search-container {
+    margin-left: 18% !important;
+    margin-top: 7%;
+}
+
+.search-container a{
+    font-size: 1.2em;
+}
+
+#individual-knock-request-modal{
+    z-index:100;
+}

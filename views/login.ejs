@@ -1,0 +1,47 @@
+<DOCTYPE html>
+<html>
+	<head>
+        <link rel="stylesheet" type="text/css" href="../dist/semantic.min.css">
+        <link rel="stylesheet" type="text/css" href="../stylesheets/new-login-style.css">
+<!--        from https://www.google.com/fonts#QuickUsePlace:quickUse-->
+        <link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+				<script src="//use.edgefonts.net/aclonica;cabin-sketch.js"></script>
+        <script src="../javascripts/jquery-2.1.4.min.js"></script>
+        <script src="../javascripts/login.js"></script>
+        <script src="../dist/semantic.min.js"></script>
+        <title>Lights@MIT</title>
+    </head>
+	  <body>
+				<div id="lights-at-MIT-title">
+					<h1 id="lights-title">Lights</h1>
+					<h1 id="at-mit-title">@MIT</h1>
+				</div>
+
+        <div id="login-register-segment" class="ui basic segment">
+          <div id="login-segment" class="ui blue segment ui raised segment">
+           <p id="sign-in-paragraph">Sign In</p>
+           <div class="ui form">
+               <div class="field">
+                  <div id="username-input" class="ui left icon input">
+                    <input id="login-username" type="text" name="username" placeholder="Username">
+                    <i class="user icon"></i>
+                  </div>
+                </div>
+                <div class="field">
+                  <div id="password-input" class="ui left icon input">
+                    <input id="login-password" type="password" name="password" placeholder="Password">
+                    <i class="lock icon"></i>
+                  </div>
+                </div>
+                <button id="sign-in-button" class="ui blue submit button">Sign In</button>
+            </div>
+
+          </div>
+        <button id="register-link-button" class="ui red button">Register Here</button>
+        </div>
+        <script src="../javascripts/socket.io.js"></script>
+        <script>
+          var socket = io();
+        </script>
+	</body>
+</html>

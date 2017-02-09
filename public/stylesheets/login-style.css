@@ -1,0 +1,44 @@
+body {
+/*   properties to create background image, from http://stradegyadvertising.com/css-create-fullscreen-background-image/ */
+    background: url('http://2.bp.blogspot.com/-PpMv3cDFUdY/Vd3mM43xtbI/AAAAAAAAAQ8/4tX8tSPu61U/s1600/focus%2Bsmall%2Bled%2Blight.jpg') no-repeat 50% 50% fixed; 
+    background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    -webkit-background-size: cover;
+}
+
+#username-and-password-row {
+/*    properties to position in center of the page, from https://css-tricks.com/centering-css-complete-guide/*/
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#username-box, #password-box {
+    padding-bottom: 0.25in;
+}
+
+#lights-at-MIT-title {
+    font-family: Leckerli One;
+    font-size: 160px;
+    text-align: center;
+}
+
+#username-addon, #password-addon {
+    background-color: black;
+    color: white;
+}
+
+#sign-in-button {
+    background-color: dodgerblue;
+    color: white;
+    border-color: dodgerblue;
+}
+
+.centered-column {
+/*    from http://stackoverflow.com/questions/18153234/center-a-column-using-twitter-bootstrap-3 */
+    float: none;
+    margin: 0 auto;
+}
+

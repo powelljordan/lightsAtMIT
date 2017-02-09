@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html ng-app="lightsApp">
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" type="text/css" href="../dist/semantic.min.css">
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script src="../javascripts/jquery-2.1.4.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+	<script src="../dist/semantic.min.js"></script>
+	<script src="../javascripts/workspace.js"></script>
+	<script src="../javascripts/lightsApp.js"></script>
+	<script src="../javascripts/controllers/whiteboardController.js"></script>
+	<script src="../javascripts/controllers/SidePanelController.js"></script>
+	<script src="../javascripts/angucomplete-alt.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body ng-controller="SidePanelController">
+
+<!--      Knock on/Create Workspaces Requests Dialog Boxes -->
+        <% include partials/individual-knock-request %>
+        <% include partials/individual-knock-respond %>
+        <% include partials/workspace-knock-request %>
+        <% include partials/workspace-knock-respond %>
+
+		<div class="ui fixed inverted menu">
+		  <div class="left menu">
+		  	<a class="item">
+<!--                TODO: either change back to "Lights@MIT" or make actual current-user-->
+                <%= current_user %>@MIT
+
+		  	</a>
+		  </div>
+		  <div class="menu">
+		  	<a id="workspace-title" class="item" style="font-size:1.2em">{{currentWorkspaceName}}</a>
+		  </div>
+		  <div class="right menu">
+		  	<a id="logout-link" class="item">
+		  		Logout
+		  	</a>
+		  </div>
+		</div>
+		<div class="ui visible left vertical inverted fixed sidebar labeled icon menu" id="fixed-side-menu" style="position:fixed">
+		  <a class="item">
+		  	<%= title %>
+		  </a>
+		  <a class="item" id="chat" ng-click="populateChat()">
+		    <i class="comment icon"></i>
+		    Chat
+		  </a>
+		  <a class="item" id="workspaces" ng-click="populateWorkspaces()">
+		    <i class="users icon"></i>
+		    Workspaces
+		  </a>
+		  <a class="item" id="people" ng-click="populatePeople()">
+		    <i class="user icon"></i>
+		    People
+		  </a>
+		  <a class="item" id="leaveRoom" ng-click="leaveWorkspace()">
+		  	Leave
+		  	<i class="home icon"></i>
+		  </a>
+		</div>
+
+		<div class="ui very wide sidebar segment" id="content-sidebar">
+
+            <div class="ui basic segment" id="chat-container" ng-show="displayChat()">
+
+<!--                <div class="ui form" ng-show="displayChat()">-->
+
+                    <div id="sent-chat-messages"> <!-- DIFFERENT -->
+                        <div class="repeated-div-containing-message" ng-repeat="message in messages track by $index">
+
+                            <div id="current-user-message" class="ui list" ng-show="IsCurrentUser(message.sender)">
+                                <div class="item">
+                                    <div class="content">
+                                        <p class="header message content">{{message.sender}}</p>
+                                        <div class="description message content">{{message.content}}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="other-user-message" class="ui list" ng-show="!IsCurrentUser(message.sender)">
+                                <div class="item">
+                                    <div class="content">
+                                        <p class="header message content">{{message.sender}}</p>
+                                        <div class="description message content">{{message.content}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                <div id="input-message-box">
+                    <div class="ui field">
+                        <div id="input-message" class="ui action input">
+                            <input class="ui" id="chat-box-content" placeholder="Type your message here..." ng-keypress="sendMessageIfEnter($event)">
+                            <button id="send-button" class="ui teal right labeled icon button" ng-click="sendMessage()">
+                                Send Message!
+                                <i class="send icon"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+<!--            </div>-->
+            </div>                    
+		    <div class="ui search search-container" ng-show="displayWorkspace()">
+		    	<div class="ui icon fluid input workspace-input">
+					<input id = "workspace-input" class="prompt" type="text" style="font-size:1.2em"ng-model="workspaceQuery" placeholder="Search Workspaces . . ."> 
+				  <i class="search icon"></i>
+				</div>
+				<div class="ui relaxed divided list"  ng-repeat="workspace in workspaceResults | filter: workspaceQuery">
+				  <div class="item" ng-click="enterWorkspace()">
+				  	<i class="users icon"></i>
+					<div class="content">
+					  <a id={{result}} class="header workspace" ng-click="handleWorkspaceClick(workspace)">@{{workspace}}</a>
+					  <div class="description"></div>
+					</div>
+				  </div>
+				</div>
+		    </div>
+		    <div class="ui search search-container" ng-show="displayPeople()">
+		    	<div class="ui icon fluid input">
+				  <input id = "people-input" class="prompt" type="text" ng-model="peopleQuery" placeholder="Search People . . .">
+				  <i class="search icon"></i>
+				</div>
+				<div class="ui relaxed divided list"  ng-repeat="person in peopleResults | filter: peopleQuery">
+				  <div class="item" ng-click="newWorkspacePrompt(person)">
+				  	<i class="user icon"></i>
+					<div class="content">
+					  <a id={{person}} class="header workspace">@{{person}}</a>
+					  <div class="description"></div>
+					</div>
+				  </div>
+				</div>
+		    </div>
+		</div>
+
+		<div class="pusher">
+			<div id="whiteboard-container">
+				<canvas width="600" height="800" id="whiteboard" ng-mousedown="startDraw($event)" ng-mousemove="draw($event)" ng-mouseup="endDraw($event)"></canvas>
+				<div id="whiteboard-buttons">
+					<div ng-click="download()"><img id="download" src="../images/download.png"></div>
+					<br><br>
+					<div ng-click="eraser()" class="eraser"></div>
+					<br><br>
+					<div id="whiteboard-colors" ng-repeat="color in colors">
+						<div class="circle-base" style="background:{{color.code}}" ng-click="marker(color.code)"></div>
+						<br><br>
+					</div>
+					<div class="ui button" ng-click="clearCanvas()">Clear</div>
+				</div>
+			</div>
+		</div>
+	<script src="https://cdn.rawgit.com/eligrey/FileSaver.js/master/FileSaver.js"></script>
+	<script type="text/javascript" src="https://cdn.rawgit.com/eligrey/Blob.js/master/Blob.js"></script>
+	<script type="text/javascript" src="https://cdn.rawgit.com/eligrey/canvas-toBlob.js/master/canvas-toBlob.js"></script>  
+  </body>
+</html>

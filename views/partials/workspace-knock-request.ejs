@@ -1,0 +1,41 @@
+<!-- very similar to workspace-knock-respond partial, with a few changes -->
+<!-- from: after inspecting the element of this page after running the code for one of the modals: http://semantic-ui.com/modules/modal.html -->
+<div id="workspace-knock-request-modal" class="ui small basic modal">
+    <i class="close icon"></i>
+    <div class="ui icon header">
+            <i class="add user icon"></i>
+            Join workspace
+    </div>
+    
+    <div class="content">
+        <div class="description">
+<!--            TODO: change from 'Lena Abdalla' to actual user's name, and 'Awesome Workspace' to the workspace's name-->
+            <p class="add-user-content">Would you like to join workspace {{clickedWorkspace}}?</p>
+<!--
+            <form class="ui inverted form error">
+                <div class="required field">
+                    <label>Workspace Name</label>
+                    <input type="text" name="requesting-user">
+                </div> 
+-->
+<!--
+                <div class="ui inverted error message">
+                    <p>You must provide your username.</p>
+                </div>
+-->
+<!--            </form>-->
+        </div>
+    </div>
+
+    <div class="actions">
+            <div class="ui inverted green button" ng-click="sendKnock(clickedWorkspace)">
+                <i class="checkmark icon"></i>
+                Knock
+            </div>
+            <div class="ui inverted red button" ng-click="hideKnockRequest()">
+                <i class="remove icon"></i>
+                Cancel
+            </div>
+            
+    </div>
+</div>

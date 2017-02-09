@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+	<div class="ui relaxed divided list"  ng-repeat="workspace in workspaceResults">
+	  <div class="item" ng-click="enterWorkspace()">
+	  	<i class="users icon"></i>
+		<div class="content">
+		  <a id={{result}} class="header workspace" ng-click="handleWorkspaceClick(workspace)">@{{workspace}}</a>
+		  <div class="description"></div>
+		</div>
+	  </div>
+	</div>
+</html>

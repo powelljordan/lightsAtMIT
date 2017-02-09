@@ -1,0 +1,404 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('lightsAtMIT:server');
+var http = require('http');
+
+//var io = require('socket.io')(http);
+
+
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.OPENSHIFT_NODEJS_PORT ||process.env.PORT || '3000');
+// app.set('port', port);
+app.set('port', port);
+// app.set('ipaddress', process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1');
+app.io = io;
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+//io.listen(server);
+
+//=================================
+//io is the socket.io server which works on top of the http server
+
+var io = require('socket.io')(server);
+
+var currentWorkspaces = {"awesome_people":{users : [], whiteboard : []},
+                        "best_one":{users:[], whiteboard : []},
+                         "superb_space":{users:[], whiteboard:[]},
+                         "hello_space":{users:[], whiteboard:[]}};
+var currentUsers = [];
+var availableOnlineUsers = [];
+
+var getUserIndex = function(userList, user){
+  for(var i=0; i<userList.length; i++){
+    if(user.name === userList[i].name){
+      return i;
+    }
+  }
+  return -1;
+}
+
+var getSocketId = function(userList, sessionId){
+  for(var i=0; i<userList.length; i++){
+    if(sessionId === userList[i].sessionId){
+      return i;
+    }
+  }
+  return -1;
+}
+
+var getUserObjectByName = function(userList, userName) {
+    userList.forEach(function(e) {
+        if (e.name === userName) {
+            return e;
+        }
+    });
+}
+
+var inWorkspace = function(user){
+  for(var workspace in currentWorkspaces){
+    for(var index in currentWorkspaces[workspace].users){
+      var wsUser = currentWorkspaces[workspace].users[index];
+      if(wsUser.name === user.name){
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+var updateAvailableUsers = function(){
+  availableOnlineUsers = [];
+  currentUsers.forEach(function(user) {
+    console.log(user, "in workspace", inWorkspace(user));
+    if (io.sockets.connected[user.sessionId] && !inWorkspace(user)) {
+        availableOnlineUsers.push(user) 
+      }
+    });
+
+  availableOnlineUsers.forEach(function(user){
+    if(io.sockets.connected[user.sessionId]){
+      io.sockets.connected[user.sessionId].emit('onlineUsers', availableOnlineUsers);
+    }
+  });
+}
+
+var updateWorkspaceMembers = function(wsname){
+  workspaceMembers = [];
+  currentWorkspaces[wsname].users.forEach(function(user){
+    if(getUserIndex(currentUsers, user) > -1){
+      workspaceMembers.push(user);
+    }
+  });
+  workspaceMembers.forEach(function(member){
+    if(io.sockets.connected[member.sessionId]){
+      io.sockets.connected[member.sessionId].emit('onlineUsers', workspaceMembers);
+    }
+  })
+}
+
+var updateWorkspaces = function(){
+
+  var currentWorkspacesList = [];
+  for (key in currentWorkspaces){
+    console.log("workspace keys", key);
+    currentWorkspacesList.push(key);
+  }
+  currentUsers.forEach(function(user){
+    if(io.sockets.connected[user.sessionId]){
+      io.sockets.connected[user.sessionId].emit('workspaces', currentWorkspacesList);
+    }
+  });
+}
+
+io.on('connection', function(socket){
+  // console.log("CONNECTED SOCKET: ", socket.handshake);
+  console.log('a user connected');
+  socket.on('pageLoaded', function(user){
+    console.log(currentUsers);
+    if(user.name && getUserIndex(currentUsers, user) < 0){
+      currentUsers.push(user);
+    }
+  updateAvailableUsers();
+  updateWorkspaces();
+  });
+  
+  //when the server receives a chat update from the user
+  //who typed in a message
+  socket.on('chat', function(msgInfo){
+    //server emits the received update to all the users
+    //in the chat
+    console.log("server: received message");
+    var workspaceName = msgInfo.wsname;
+    if (currentWorkspaces[workspaceName]) {
+        console.log("workspace exists");
+        var users = currentWorkspaces[workspaceName].users;
+        console.log("users:", users);
+        users.forEach(function(e) {
+            console.log("there is a user");
+            if (io.sockets.connected[e.sessionId]) {
+                console.log("session id exists");
+               io.sockets.connected[e.sessionId].emit('chat', msgInfo); 
+            }
+        });
+    }
+  });
+  
+  
+  socket.on('knock', function(workspaceAndUser) {
+    console.log("server: received the knock and emitting the knock");
+    var knockingUser = workspaceAndUser.user;
+    var workspaceName = workspaceAndUser.name;
+    console.log("these are the users in workspace: ", workspaceName, ": ", currentWorkspaces[workspaceName].users);
+    //emit the change to the current users in the workspace
+    currentWorkspaces[workspaceName].users.forEach(function(e) {
+        io.sockets.connected[e.sessionId].emit("showKnockResponseDialog", knockingUser);
+    });
+  });
+  
+  socket.on('knockSuccessfulToKnockingUser', function(knockingUser, workspaceName) {
+    console.log("knocking user is: ", knockingUser); io.sockets.connected[knockingUser.sessionId].emit("youWereAcceptedIntoWorkspace", workspaceName);
+  });
+  
+  socket.on('userAccepted', function(workspaceName) {
+    console.log("emitting the user accepted event");
+    //emit this event to all other users in the workspace
+    currentWorkspaces[workspaceName].users.forEach(function(e) {
+        io.sockets.connected[e.sessionId].emit("userAccepted");
+    });
+  });
+  
+  socket.on('joinroom', function(workspaceAndUser) {
+    var workspaceName = workspaceAndUser.name;
+    if (currentWorkspaces[workspaceName]) {
+      var userIndex = getUserIndex(currentWorkspaces[workspaceName].users, workspaceAndUser.user);
+      if(userIndex > -1){
+        currentWorkspaces[workspaceName].users[userIndex].sessionId = workspaceAndUser.user.sessionId;
+      }
+      else{
+        currentWorkspaces[workspaceName].users.push(workspaceAndUser.user);
+      }
+
+      io.sockets.connected[workspaceAndUser.user.sessionId].emit("loadWhiteBoard",
+                                                                currentWorkspaces[workspaceName].whiteboard);
+    } else {
+        currentWorkspaces[workspaceName] = {users: [workspaceAndUser.user],
+                                            whiteboard: [],
+                                            custom:workspaceAndUser.custom};
+      io.sockets.connected[workspaceAndUser.user.sessionId].emit("loadWhiteBoard",
+                                                                currentWorkspaces[workspaceName].whiteboard);
+    }
+    updateAvailableUsers();
+    updateWorkspaceMembers(workspaceName);
+
+  });
+
+
+  socket.on('newWorkspaceRequest', function(initiator, collaborator, wsname){
+    var collaboratorIndex = getUserIndex(availableOnlineUsers, {name:collaborator});
+    if(getUserIndex(availableOnlineUsers, initiator) > -1 && collaboratorIndex> -1){
+      io.sockets.connected[availableOnlineUsers[collaboratorIndex].sessionId].emit("newWorkspaceRequest", initiator, wsname);
+    }
+  });
+
+  socket.on("workspaceConfirmed", function(wsname, initiator){
+    console.log("confirming the workspace to initiator: ", initiator);
+    var initiatorIndex = getUserIndex(availableOnlineUsers, initiator)
+    if(initiatorIndex > -1){
+      io.sockets.connected[availableOnlineUsers[initiatorIndex].sessionId].emit("workspaceConfirmed", wsname);
+      // currentWorkspaces[wsname] = {users: [initiator], whiteboard: [], custom:true};
+      // currentWorkspaces[wsname] = {users: [collaborator], whiteboard: [], custom:true};
+      updateWorkspaces();
+    }
+  });
+
+  socket.on('drawEvent', function(plotsData){
+    var workspaceName = plotsData.wsname;
+    currentWorkspaces[workspaceName].whiteboard.push(plotsData.plots);
+    if (currentWorkspaces[workspaceName]) {
+      var users = currentWorkspaces[workspaceName].users;
+      users.forEach(function(e) {
+          if (io.sockets.connected[e.sessionId]) {
+             io.sockets.connected[e.sessionId].emit('drawEvent', plotsData); 
+          }
+      });
+    }
+  });
+
+  socket.on('requestClear', function(workspaceData){
+    currentWorkspaces[workspaceData.wsname].whiteboard = [];
+    currentWorkspaces[workspaceData.wsname].users.forEach(function(user){
+      if(io.sockets.connected[user.sessionId]){
+        io.sockets.connected[user.sessionId].emit('clearBoard');
+      }
+    });
+  });
+
+
+  //socket on user leaving a workspace
+  socket.on('leave', function(workspaceAndUser){
+    console.log(currentWorkspaces[workspaceAndUser.name].users);
+    if (currentWorkspaces[workspaceAndUser.name]) {
+      console.log("outer");
+      var userList = currentWorkspaces[workspaceAndUser.name].users;
+      var userIndex = getUserIndex(userList, workspaceAndUser.user);
+      console.log("userIndex:",userIndex);
+      if (userIndex > -1){
+        console.log("inner");
+        userList.splice(userIndex,1);
+      }
+    } console.log(currentWorkspaces[workspaceAndUser.name].users);
+    //UPDATE ONLINE USERS
+    updateAvailableUsers();
+    updateWorkspaceMembers(workspaceAndUser.name);
+    for (key in currentWorkspaces){
+      if(currentWorkspaces[key].users.length === 0 && currentWorkspaces[key].custom === true){
+        console.log("gets called");
+        delete currentWorkspaces[key];
+      }
+    }
+    updateWorkspaces();
+  });
+
+
+  //socket on user disconnected
+  socket.on('disconnect', function(){
+    var socketIndex = getSocketId(currentUsers, socket.id);
+    var availableUsersSocketIndex = getSocketId(availableOnlineUsers, socket.id);
+    var deletedUser = currentUsers[socketIndex];
+    console.log(socketIndex);
+    //Remove disconnected user from currentUsers list
+    if(socketIndex > -1){
+      currentUsers.splice(socketIndex,1);
+    }
+    console.log("currentUsers in disconnect:", currentUsers);
+    //Remove disconnected user from availableOnlineUsers list
+    if(availableUsersSocketIndex > -1){
+      availableOnlineUsers.splice(availableUsersSocketIndex, 1);
+    }
+    console.log("availableOnlineUsers in disconnect:", availableOnlineUsers);
+
+    //Remove disconnected user from his workspace
+    for (key in currentWorkspaces){
+      console.log("workspace", key, "users", currentWorkspaces[key].users);
+      currentWorkspaces[key].users.forEach(function(user){
+        if(getUserIndex(currentUsers, user) < 0){
+          currentWorkspaces[key].users.splice(getUserIndex(currentWorkspaces[key].users, user), 1)
+          updateWorkspaceMembers(key);
+        }
+        console.log("workspace", key, "users", currentWorkspaces[key].users);
+      })
+      if(currentWorkspaces[key].users.length === 0 && currentWorkspaces[key].custom === true){
+        delete currentWorkspaces[key];
+      }
+    }
+
+    console.log("this user disconnected:", socket.id);
+
+    availableOnlineUsers.forEach(function(user) {
+      console.log(user, "in workspace", inWorkspace(user));
+      if (io.sockets.connected[user.sessionId]) {
+          io.sockets.connected[user.sessionId].emit('onlineUsers', availableOnlineUsers); 
+        }
+      });
+
+    for(key in currentWorkspaces){
+      currentWorkspaces[key].users.forEach(function(user){
+        if(user.name === deletedUser){
+          updateWorkspaceMembers(key);
+        }
+      })
+    }
+
+
+    updateWorkspaces();
+  });
+
+});
+
+
+
+//========================================
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port, process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1', function(){
+  console.log("server_port " + port )
+});
+
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
